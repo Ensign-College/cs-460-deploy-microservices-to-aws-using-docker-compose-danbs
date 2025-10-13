@@ -10,6 +10,7 @@ import static org.springframework.boot.test.context.SpringBootTest.WebEnvironmen
 import java.util.Arrays;
 import java.util.List;
 
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
@@ -32,8 +33,17 @@ public class RecommendationControllerTest {
   @Autowired
   private TestRestTemplate restTemplate;
 
+  private TestRestTemplate userRestTemplate;
+  private TestRestTemplate adminRestTemplate;
+
   @MockBean
   private RecommendationService serviceMock;
+
+  @BeforeEach
+  void setUp() {
+    this.userRestTemplate = restTemplate.withBasicAuth("user", "password");
+    this.adminRestTemplate = restTemplate.withBasicAuth("admin", "admin123");
+  }
 
   @Test
   void testGetTopRecommendations_ValidRequest() {
@@ -45,7 +55,7 @@ public class RecommendationControllerTest {
     when(serviceMock.recommendTopN(LIMIT)).thenReturn(mockRecommendations);
 
     // When
-    ResponseEntity<String> response = restTemplate.getForEntity("/recommendations/top/" + LIMIT, String.class);
+    ResponseEntity<String> response = userRestTemplate.getForEntity("/recommendations/top/" + LIMIT, String.class);
 
     // Then
     assertThat(response.getStatusCode(), is(HttpStatus.OK));
@@ -55,7 +65,7 @@ public class RecommendationControllerTest {
   @Test
   void testGetTopRecommendations_InvalidLimit_TooLow() {
     // When
-    ResponseEntity<String> response = restTemplate.getForEntity("/recommendations/top/0", String.class);
+    ResponseEntity<String> response = userRestTemplate.getForEntity("/recommendations/top/0", String.class);
 
     // Then
     assertThat(response.getStatusCode(), is(HttpStatus.BAD_REQUEST));
@@ -64,7 +74,7 @@ public class RecommendationControllerTest {
   @Test
   void testGetTopRecommendations_InvalidLimit_TooHigh() {
     // When
-    ResponseEntity<String> response = restTemplate.getForEntity("/recommendations/top/101", String.class);
+    ResponseEntity<String> response = userRestTemplate.getForEntity("/recommendations/top/101", String.class);
 
     // Then
     assertThat(response.getStatusCode(), is(HttpStatus.BAD_REQUEST));
@@ -79,7 +89,7 @@ public class RecommendationControllerTest {
     when(serviceMock.recommendForCustomer(CUSTOMER_ID, LIMIT)).thenReturn(mockRecommendations);
 
     // When
-    ResponseEntity<String> response = restTemplate.getForEntity(
+    ResponseEntity<String> response = userRestTemplate.getForEntity(
         "/recommendations/customer/" + CUSTOMER_ID + "?limit=" + LIMIT, String.class);
 
     // Then
@@ -96,7 +106,7 @@ public class RecommendationControllerTest {
     when(serviceMock.recommendForCustomer(CUSTOMER_ID, 5)).thenReturn(mockRecommendations);
 
     // When
-    ResponseEntity<String> response = restTemplate.getForEntity(
+    ResponseEntity<String> response = userRestTemplate.getForEntity(
         "/recommendations/customer/" + CUSTOMER_ID, String.class);
 
     // Then
@@ -107,7 +117,7 @@ public class RecommendationControllerTest {
   @Test
   void testGetCustomerRecommendations_InvalidCustomerId() {
     // When
-    ResponseEntity<String> response = restTemplate.getForEntity("/recommendations/customer/0", String.class);
+    ResponseEntity<String> response = userRestTemplate.getForEntity("/recommendations/customer/0", String.class);
 
     // Then
     assertThat(response.getStatusCode(), is(HttpStatus.BAD_REQUEST));
@@ -116,7 +126,7 @@ public class RecommendationControllerTest {
   @Test
   void testGetCustomerRecommendations_InvalidLimit_TooLow() {
     // When
-    ResponseEntity<String> response = restTemplate.getForEntity(
+    ResponseEntity<String> response = userRestTemplate.getForEntity(
         "/recommendations/customer/" + CUSTOMER_ID + "?limit=0", String.class);
 
     // Then
@@ -126,7 +136,7 @@ public class RecommendationControllerTest {
   @Test
   void testGetCustomerRecommendations_InvalidLimit_TooHigh() {
     // When
-    ResponseEntity<String> response = restTemplate.getForEntity(
+    ResponseEntity<String> response = userRestTemplate.getForEntity(
         "/recommendations/customer/" + CUSTOMER_ID + "?limit=101", String.class);
 
     // Then
@@ -139,7 +149,7 @@ public class RecommendationControllerTest {
     when(serviceMock.recommendForCustomer(CUSTOMER_ID, LIMIT)).thenReturn(Arrays.asList());
 
     // When
-    ResponseEntity<String> response = restTemplate.getForEntity(
+    ResponseEntity<String> response = userRestTemplate.getForEntity(
         "/recommendations/customer/" + CUSTOMER_ID + "?limit=" + LIMIT, String.class);
 
     // Then
@@ -151,7 +161,7 @@ public class RecommendationControllerTest {
   @Test
   void testClearCache() {
     // When
-    ResponseEntity<String> response = restTemplate.exchange(
+    ResponseEntity<String> response = adminRestTemplate.exchange(
         "/recommendations/cache",
         org.springframework.http.HttpMethod.DELETE,
         null,

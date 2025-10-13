@@ -48,6 +48,56 @@ curl -X DELETE http://localhost:8080/packages/BB
 
 Use `docker compose down` to stop the services when finished.
 
+## 🔐 Spring Security Authentication
+
+This application now includes Spring Security with HTTP Basic Authentication. **All API endpoints require authentication** except for health checks and documentation.
+
+### Authentication Credentials
+
+- **Read Access (USER role)**: `user` / `password`
+- **Full Access (ADMIN role)**: `admin` / `admin123`
+
+### API Access Rules
+
+- **GET requests** on `/tours/**` and `/packages/**`: Requires USER or ADMIN role
+- **POST/PUT/PATCH/DELETE** on `/tours/**` and `/packages/**`: Requires ADMIN role only
+- **Public endpoints**: `/actuator/health`, `/swagger-ui/**`, `/v3/api-docs/**`
+
+### Testing with curl
+
+```bash
+# Test unauthenticated access (should get 401)
+curl -i http://localhost:8080/packages
+
+# Test authenticated read access
+curl -i -u user:password http://localhost:8080/packages
+curl -i -u user:password http://localhost:8080/tours/1/ratings
+
+# Test user cannot mutate (should get 403)
+curl -i -u user:password -X POST http://localhost:8080/packages \
+  -H 'Content-Type: application/json' \
+  -d '{"code":"BB","name":"Test Package"}'
+
+# Test admin can mutate (should succeed)
+curl -i -u admin:admin123 -X POST http://localhost:8080/packages \
+  -H 'Content-Type: application/json' \
+  -d '{"code":"BB","name":"Test Package"}'
+
+# Test public endpoints (no auth required)
+curl -i http://localhost:8080/actuator/health
+curl -i http://localhost:8080/swagger-ui/index.html
+```
+
+### Postman Configuration
+
+For Postman users:
+1. Go to **Authorization** tab
+2. Select **Basic Auth**
+3. Enter username: `user` (for reads) or `admin` (for mutations)
+4. Enter password: `password` (for user) or `admin123` (for admin)
+
+See `curlcommands.txt` for a complete set of test commands.
+
 Awesome — here’s a **drop-in README.md** that includes **Mermaid diagrams** for the VPC/ECS/RDS architecture and the request flow. You can paste this directly into your repo.
 
 ---

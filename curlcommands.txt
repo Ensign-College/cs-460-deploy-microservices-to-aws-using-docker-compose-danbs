@@ -1,10 +1,81 @@
-# Create a tour package
-curl -X POST http://localhost:8080/packages \
+# ===========================================
+# Spring Security Authentication Required
+# ===========================================
+# Reads: -u user:password
+# Mutations: -u admin:admin123
+
+# ===========================================
+# Test Unauthenticated Access (should get 401)
+# ===========================================
+# curl -i http://localhost:8080/packages
+# Expected: HTTP/1.1 401 Unauthorized
+
+# ===========================================
+# Test Authenticated Read Access (USER or ADMIN)
+# ===========================================
+# List tour packages (read access)
+curl -i -u user:password http://localhost:8080/packages
+
+# Get tour ratings (read access)
+curl -i -u user:password http://localhost:8080/tours/1/ratings
+
+# Get tour rating average (read access)
+curl -i -u user:password http://localhost:8080/tours/1/ratings/average
+
+# ===========================================
+# Test USER Cannot Mutate (should get 403)
+# ===========================================
+# User tries to create a package - should return 403 Forbidden
+# curl -i -u user:password -X POST http://localhost:8080/packages \
+#   -H 'Content-Type: application/json' \
+#   -d '{"code":"BB","name":"Beekeepers you Betcha"}'
+
+# User tries to create a rating - should return 403 Forbidden
+# curl -i -u user:password -X POST http://localhost:8080/tours/1/ratings \
+#   -H 'Content-Type: application/json' \
+#   -d '{"score":5,"comment":"Great!","customerId":999}'
+
+# ===========================================
+# Test ADMIN Can Mutate (should succeed)
+# ===========================================
+# Create a tour package (admin only)
+curl -i -u admin:admin123 -X POST http://localhost:8080/packages \
   -H 'Content-Type: application/json' \
   -d '{"code":"BB","name":"Beekeepers you Betcha"}'
 
-# List tour packages
-curl http://localhost:8080/packages
+# Update a tour package (admin only)
+curl -i -u admin:admin123 -X PUT http://localhost:8080/packages/BB \
+  -H 'Content-Type: application/json' \
+  -d '{"code":"BB","name":"Beekeepers you Betcha - Updated"}'
 
-# Delete the tour package
-curl -X DELETE http://localhost:8080/packages/BB
+# Delete the tour package (admin only)
+curl -i -u admin:admin123 -X DELETE http://localhost:8080/packages/BB
+
+# Create a tour rating (admin only)
+curl -i -u admin:admin123 -X POST http://localhost:8080/tours/1/ratings \
+  -H 'Content-Type: application/json' \
+  -d '{"score":5,"comment":"Excellent tour!","customerId":999}'
+
+# Update a tour rating (admin only)
+curl -i -u admin:admin123 -X PUT http://localhost:8080/tours/1/ratings \
+  -H 'Content-Type: application/json' \
+  -d '{"score":4,"comment":"Updated comment","customerId":999}'
+
+# Delete a tour rating (admin only)
+curl -i -u admin:admin123 -X DELETE http://localhost:8080/tours/1/ratings/999
+
+# ===========================================
+# Test Public Endpoints (no auth required)
+# ===========================================
+# Health check (public)
+curl -i http://localhost:8080/actuator/health
+
+# Swagger UI (public)
+curl -i http://localhost:8080/swagger-ui/index.html
+
+# ===========================================
+# Postman Users
+# ===========================================
+# Authorization → Basic Auth
+# Username: user (for reads) or admin (for mutations)
+# Password: password (for user) or admin123 (for admin)

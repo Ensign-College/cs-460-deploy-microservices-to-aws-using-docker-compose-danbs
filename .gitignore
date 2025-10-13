@@ -40,3 +40,7 @@ build/
 
 ### VS Code ###
 .vscode/
+ExploreCalifornia-Environment.postman_environment.json
+ExploreCalifornia-Security-Tests.postman_collection.json
+POSTMAN-TESTING-GUIDE.md
+SECURITY_TESTING.md
